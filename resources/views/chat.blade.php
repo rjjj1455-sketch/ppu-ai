@@ -225,7 +225,7 @@
             scrollDown();
 
             try {
-                const response = await fetch('/chat/send', {
+                const response = await fetch('/chat/',{
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -265,6 +265,7 @@
             }
             scrollDown();
         }
+        
 
         function scrollDown() {
             container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });

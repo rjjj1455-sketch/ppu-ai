@@ -13,17 +13,18 @@ class LayananPublikController extends Controller
     {
         $query = LayananPublik::query();
 
-        // Search
         if ($request->filled('search')) {
             $query->search($request->search);
         }
 
-        // Filter dinas
         if ($request->filled('dinas')) {
             $query->filterDinas($request->dinas);
         }
 
-        // Filter tanggal
+        if ($request->filled('status')) {
+            $query->where('validation_status', $request->status);
+        }
+
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -31,18 +32,14 @@ class LayananPublikController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Sorting
-        $sortBy = $request->get('sort', 'nomor');
-        $sortDir = $request->get('direction', 'desc');
-        $allowedSorts = ['nomor', 'dinas', 'created_at'];
+        $sortBy  = in_array($request->get('sort'), ['nomor', 'dinas', 'created_at', 'validation_status'])
+            ? $request->get('sort') : 'created_at';
+        $sortDir = $request->get('direction') === 'asc' ? 'asc' : 'desc';
 
-        if (in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy, $sortDir);
-        }
+        $query->orderBy($sortBy, $sortDir);
 
         $layanan = $query->paginate(15)->withQueryString();
 
-        // Daftar dinas untuk filter dropdown
         $dinasOptions = LayananPublik::select('dinas')
             ->whereNotNull('dinas')
             ->where('dinas', '!=', '')
@@ -50,7 +47,15 @@ class LayananPublikController extends Controller
             ->orderBy('dinas')
             ->pluck('dinas');
 
-        return view('admin.layanan.index', compact('layanan', 'dinasOptions'));
+        $stats = [
+            'total'   => LayananPublik::count(),
+            'pending' => LayananPublik::where('validation_status', 'pending')->count(),
+            'valid'   => LayananPublik::where('validation_status', 'valid')->count(),
+            'revisi'  => LayananPublik::where('validation_status', 'revisi')->count(),
+            'salah'   => LayananPublik::where('validation_status', 'salah_mapping')->count(),
+        ];
+
+        return view('admin.layanan.index', compact('layanan', 'dinasOptions', 'stats'));
     }
 
     public function create()
@@ -61,17 +66,25 @@ class LayananPublikController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'keluhan'   => ['required', 'string'],
-            'solusi'    => ['required', 'string'],
-            'dinas'     => ['nullable', 'string', 'max:255'],
-            'link'      => ['nullable', 'url', 'max:2048'],
-            'instagram' => ['nullable', 'string', 'max:255'],
+            'keluhan'           => ['required', 'string'],
+            'solusi'            => ['required', 'string'],
+            'dinas'             => ['nullable', 'string', 'max:255'],
+            'link'              => ['nullable', 'url', 'max:2048'],
+            'instagram'         => ['nullable', 'string', 'max:255'],
+            'validation_status' => ['nullable', 'in:pending,valid,revisi,salah_mapping'],
         ]);
+
+        $validated['nomor'] = (LayananPublik::max('nomor') ?? 0) + 1;
 
         LayananPublik::create($validated);
 
         return redirect()->route('admin.layanan.index')
             ->with('success', 'Data layanan publik berhasil ditambahkan.');
+    }
+
+    public function show(LayananPublik $layanan)
+    {
+        return view('admin.layanan.show', compact('layanan'));
     }
 
     public function edit(LayananPublik $layanan)
@@ -82,11 +95,13 @@ class LayananPublikController extends Controller
     public function update(Request $request, LayananPublik $layanan)
     {
         $validated = $request->validate([
-            'keluhan'   => ['required', 'string'],
-            'solusi'    => ['required', 'string'],
-            'dinas'     => ['nullable', 'string', 'max:255'],
-            'link'      => ['nullable', 'url', 'max:2048'],
-            'instagram' => ['nullable', 'string', 'max:255'],
+            'keluhan'           => ['required', 'string'],
+            'solusi'            => ['required', 'string'],
+            'dinas'             => ['nullable', 'string', 'max:255'],
+            'link'              => ['nullable', 'url', 'max:2048'],
+            'instagram'         => ['nullable', 'string', 'max:255'],
+            'validation_status' => ['nullable', 'in:pending,valid,revisi,salah_mapping'],
+            'validation_note'   => ['nullable', 'string', 'max:1000'],
         ]);
 
         $layanan->update($validated);
@@ -109,11 +124,10 @@ class LayananPublikController extends Controller
 
         $response = new StreamedResponse(function () {
             $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
 
-            // Header CSV
-            fputcsv($handle, ['Nomor', 'Keluhan', 'Solusi', 'Dinas', 'Link', 'Instagram', 'Status Validasi', 'Tanggal']);
+            fputcsv($handle, ['Nomor', 'Keluhan', 'Solusi', 'Dinas', 'Link', 'Instagram', 'Status Validasi', 'Catatan', 'Tanggal']);
 
-            // Data
             LayananPublik::orderBy('nomor')->chunk(200, function ($items) use ($handle) {
                 foreach ($items as $item) {
                     fputcsv($handle, [
@@ -124,6 +138,7 @@ class LayananPublikController extends Controller
                         $item->link,
                         $item->instagram,
                         $item->validation_status,
+                        $item->validation_note,
                         $item->created_at?->format('Y-m-d H:i'),
                     ]);
                 }
@@ -132,7 +147,7 @@ class LayananPublikController extends Controller
             fclose($handle);
         });
 
-        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
         $response->headers->set('Content-Disposition', "attachment; filename=\"{$filename}\"");
 
         return $response;

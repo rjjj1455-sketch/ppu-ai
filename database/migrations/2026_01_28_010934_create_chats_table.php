@@ -6,22 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('chats', function (Blueprint $table) {
-        $table->id();
-        $table->text('user_message'); // Pesan dari user
-        $table->text('ai_response');  // Jawaban dari Gemini
-        $table->timestamps();         // Akan mencatat waktu (created_at)
+            $table->id();
+            $table->text('user_message');
+            $table->text('ai_response');
+            $table->string('ip_address', 45)->nullable();
+            $table->string('session_id')->nullable();
+            $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('chats');

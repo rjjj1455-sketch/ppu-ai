@@ -12,14 +12,16 @@ class ValidasiController extends Controller
     {
         $query = LayananPublik::query();
 
-        // Filter status
         if ($request->filled('status')) {
             $query->where('validation_status', $request->status);
         }
 
-        // Search
         if ($request->filled('search')) {
             $query->search($request->search);
+        }
+
+        if ($request->filled('dinas')) {
+            $query->filterDinas($request->dinas);
         }
 
         $layanan = $query->latest()->paginate(15)->withQueryString();
@@ -32,7 +34,14 @@ class ValidasiController extends Controller
             'salah'   => LayananPublik::where('validation_status', 'salah_mapping')->count(),
         ];
 
-        return view('admin.validasi.index', compact('layanan', 'stats'));
+        $dinasOptions = LayananPublik::select('dinas')
+            ->whereNotNull('dinas')
+            ->where('dinas', '!=', '')
+            ->distinct()
+            ->orderBy('dinas')
+            ->pluck('dinas');
+
+        return view('admin.validasi.index', compact('layanan', 'stats', 'dinasOptions'));
     }
 
     public function updateStatus(Request $request, LayananPublik $layanan)
@@ -44,7 +53,26 @@ class ValidasiController extends Controller
 
         $layanan->update($validated);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => "Status layanan #{$layanan->nomor} berhasil diperbarui."]);
+        }
+
         return redirect()->route('admin.validasi.index')
             ->with('success', "Status layanan #{$layanan->nomor} berhasil diperbarui.");
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'               => ['required', 'array'],
+            'ids.*'             => ['integer', 'exists:layanan_publik,id'],
+            'validation_status' => ['required', 'in:pending,valid,revisi,salah_mapping'],
+        ]);
+
+        LayananPublik::whereIn('id', $validated['ids'])
+            ->update(['validation_status' => $validated['validation_status']]);
+
+        return redirect()->route('admin.validasi.index')
+            ->with('success', count($validated['ids']) . ' data berhasil diperbarui.');
     }
 }
