@@ -128,8 +128,8 @@
                     </span>
                 </td>
                 <td>
-                    <div class="text-main">{{ $item->created_at->format('d M Y') }}</div>
-                    <div class="text-sub">{{ $item->created_at->format('H:i') }}</div>
+                    <div class="text-main">{{  $item->created_at ? $item->created_at->format('d M Y') : '-' }}</div>
+                    <div class="text-sub">{{ $item->created_at ? $item->created_at->format('H:i') : '-' }}</div>
                 </td>
                 <td>
                     <div style="display:flex; gap:6px;">

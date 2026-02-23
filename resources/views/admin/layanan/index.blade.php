@@ -207,8 +207,10 @@
                     </span>
                 </td>
                 <td>
-                    <div class="text-main" style="font-size:12px;">{{ $item->created_at->format('d M Y') }}</div>
-                    <div class="text-sub">{{ $item->created_at->diffForHumans() }}</div>
+                    <div class="text-main" style="font-size:12px;">
+    {{ $item->created_at ? $item->created_at->format('d M Y') : '-' }}
+</div>
+                    <div class="text-sub">{{ $item->created_at ? $item->created_at->diffForHumans() : '-' }}</div>
                 </td>
                 <td>
                     <div style="display:flex; gap:6px;">

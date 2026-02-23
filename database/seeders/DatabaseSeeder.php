@@ -127,7 +127,8 @@ class DatabaseSeeder extends Seeder
 
         foreach ($layananData as $data) {
             LayananPublik::create($data);
-        }
+            $this->call(LayananPublikTableSeeder::class);
+    }
 
         // ── Chat History (simulasi 7 hari terakhir) ──────────────────
         $chatSamples = [
