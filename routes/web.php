@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LayananPublikController;
 use App\Http\Controllers\Admin\ValidasiController;
@@ -19,12 +20,23 @@ Route::delete('/chat/all/clear', [ChatController::class, 'clearAllChats']);
 
 /*
 |--------------------------------------------------------------------------
-| Admin Routes
+| Auth Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes (Dilindungi Login)
 |--------------------------------------------------------------------------
 */
 
 Route::prefix('admin')
     ->name('admin.')
+    ->middleware(['admin'])  // <-- tambahan ini saja
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/chart-data', [DashboardController::class, 'chartData'])->name('chart.data');

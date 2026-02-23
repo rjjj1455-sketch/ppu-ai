@@ -182,16 +182,19 @@
         }
 
         .footer-info { flex: 1; min-width: 0; }
-        .footer-name { font-size: 13px; font-weight: 600; color: var(--text); truncate: ellipsis; }
+        .footer-name { font-size: 13px; font-weight: 600; color: var(--text); }
         .footer-role { font-size: 11px; color: var(--text3); }
 
         .logout-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
             color: var(--text3);
-            text-decoration: none;
             font-size: 18px;
             padding: 4px;
             border-radius: 6px;
             transition: color .2s;
+            line-height: 1;
         }
         .logout-btn:hover { color: var(--red); }
 
@@ -359,23 +362,13 @@
             font-family: 'DM Sans', sans-serif;
         }
 
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-        }
+        .btn-primary { background: var(--accent); color: white; }
         .btn-primary:hover { background: #2563eb; }
 
-        .btn-danger {
-            background: rgba(239,68,68,.15);
-            color: var(--red);
-        }
+        .btn-danger { background: rgba(239,68,68,.15); color: var(--red); }
         .btn-danger:hover { background: rgba(239,68,68,.25); }
 
-        .btn-ghost {
-            background: transparent;
-            color: var(--text2);
-            border: 1px solid var(--border);
-        }
+        .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
         .btn-ghost:hover { background: var(--bg3); color: var(--text); }
 
         .btn-sm { padding: 6px 12px; font-size: 12px; }
@@ -391,10 +384,7 @@
             border: 1px solid var(--border);
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        table { width: 100%; border-collapse: collapse; }
 
         thead { background: var(--bg3); }
         thead th {
@@ -407,10 +397,7 @@
             white-space: nowrap;
         }
 
-        tbody tr {
-            border-top: 1px solid var(--border);
-            transition: background .15s;
-        }
+        tbody tr { border-top: 1px solid var(--border); transition: background .15s; }
         tbody tr:hover { background: var(--bg3); }
 
         tbody td {
@@ -444,7 +431,6 @@
         .form-control::placeholder { color: var(--text3); }
 
         textarea.form-control { resize: vertical; min-height: 100px; }
-
         select.form-control { cursor: pointer; }
 
         .form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
@@ -453,8 +439,7 @@
         .alert {
             padding: 14px 18px;
             border-radius: var(--radius-sm);
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 13px; font-weight: 500;
             display: flex; align-items: center; gap: 10px;
             margin-bottom: 20px;
         }
@@ -463,10 +448,7 @@
         .alert-error   { background: rgba(239,68,68,.1);  border: 1px solid rgba(239,68,68,.3);  color: #ef4444; }
 
         /* Pagination */
-        .pagination {
-            display: flex; align-items: center; gap: 4px;
-            flex-wrap: wrap;
-        }
+        .pagination { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 
         .pagination .page-link {
             display: inline-flex; align-items: center; justify-content: center;
@@ -485,12 +467,7 @@
         .pagination .page-link.disabled { opacity: .4; pointer-events: none; }
 
         /* Filter bar */
-        .filter-bar {
-            display: flex; align-items: center;
-            gap: 10px; flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
+        .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
         .filter-bar .form-control { width: auto; }
         .search-input { min-width: 260px; }
 
@@ -498,11 +475,7 @@
         .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
 
         /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text3);
-        }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
         .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .4; }
         .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 16px; color: var(--text2); margin-bottom: 6px; }
 
@@ -569,13 +542,19 @@
         </a>
     </nav>
 
+    <!-- Sidebar Footer dengan tombol logout -->
     <div class="sidebar-footer">
-        <div class="avatar">A</div>
-        <div class="footer-info">
-            <div class="footer-name">Admin PPU</div>
-            <div class="footer-role">Administrator</div>
+        <div class="avatar">
+            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
         </div>
-        {{-- <a href="{{ route('logout') }}" class="logout-btn" title="Logout">⏻</a> --}}
+        <div class="footer-info">
+            <div class="footer-name">{{ Auth::user()->name }}</div>
+            <div class="footer-role">{{ ucfirst(Auth::user()->role) }}</div>
+        </div>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="logout-btn" title="Logout">⏻</button>
+        </form>
     </div>
 </aside>
 
