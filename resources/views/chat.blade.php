@@ -122,7 +122,7 @@
         }
     </style>
 </head>
-<body class="h-screen flex flex-col">
+git <body class="h-screen flex flex-col">
 
     <header class="flex items-center px-6 py-3 sticky top-0 z-50">
         <span class="text-xl font-medium text-gray-800">PPU <span class="text-blue-600">AI</span></span>

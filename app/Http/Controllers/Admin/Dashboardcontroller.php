@@ -20,11 +20,9 @@ class DashboardController extends Controller
         $totalPending = LayananPublik::where('validation_status', 'pending')->count();
         $totalSalah   = LayananPublik::where('validation_status', 'salah_mapping')->count();
 
-        // Chat hari ini vs kemarin
         $chatsToday     = Chat::whereDate('created_at', Carbon::today())->count();
         $chatsYesterday = Chat::whereDate('created_at', Carbon::yesterday())->count();
 
-        // Chat per hari (7 hari terakhir)
         $chatPerHari = Chat::select(
                 DB::raw('DATE(created_at) as tanggal'),
                 DB::raw('COUNT(*) as jumlah')
@@ -35,7 +33,6 @@ class DashboardController extends Controller
             ->get()
             ->keyBy('tanggal');
 
-        // Isi tanggal yang kosong agar grafik lengkap
         $chartLabels = [];
         $chartData   = [];
         for ($i = 6; $i >= 0; $i--) {
@@ -44,7 +41,6 @@ class DashboardController extends Controller
             $chartData[]   = $chatPerHari[$date]->jumlah ?? 0;
         }
 
-        // Statistik dinas terpopuler
         $dinasStats = LayananPublik::select('dinas', DB::raw('COUNT(*) as jumlah'))
             ->whereNotNull('dinas')
             ->where('dinas', '!=', '')
@@ -53,29 +49,16 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
-        // Chat terbaru
-        $recentChats = Chat::latest()->limit(5)->get();
-
-        // Layanan pending terbaru
+        $recentChats    = Chat::latest()->limit(5)->get();
         $pendingLayanan = LayananPublik::where('validation_status', 'pending')
             ->latest()
             ->limit(5)
             ->get();
 
         return view('admin.dashboard', compact(
-            'totalChats',
-            'totalLayanan',
-            'totalValid',
-            'totalRevisi',
-            'totalPending',
-            'totalSalah',
-            'chatsToday',
-            'chatsYesterday',
-            'chartLabels',
-            'chartData',
-            'dinasStats',
-            'recentChats',
-            'pendingLayanan'
+            'totalChats', 'totalLayanan', 'totalValid', 'totalRevisi',
+            'totalPending', 'totalSalah', 'chatsToday', 'chatsYesterday',
+            'chartLabels', 'chartData', 'dinasStats', 'recentChats', 'pendingLayanan'
         ));
     }
 
