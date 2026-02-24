@@ -102,6 +102,40 @@
             font-size: 15px;
             transition: all 0.2s;
             outline: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Sembunyikan placeholder asli, gunakan custom placeholder */
+        .input-wrapper input::placeholder {
+            color: transparent;
+        }
+
+        /* Custom animated placeholder lewat data attribute + pseudo */
+        .input-wrapper .custom-placeholder {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4a5568;
+            font-size: 15px;
+            pointer-events: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* Cursor blink di akhir placeholder */
+        .input-wrapper .custom-placeholder::after {
+            content: '|';
+            color: var(--accent);
+            animation: blink 0.8s step-end infinite;
+            margin-left: 1px;
+        }
+
+        /* Sembunyikan cursor & placeholder saat input ada isi atau fokus dengan value */
+        .input-wrapper input:not(:placeholder-shown) + .custom-placeholder,
+        .input-wrapper input:focus + .custom-placeholder {
+            display: none;
         }
 
         .input-wrapper input:focus {
@@ -141,6 +175,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         .btn-login:hover {
@@ -155,13 +190,18 @@
             text-align: center;
             margin-top: 24px;
             font-size: 12px;
-            color: var(--text-3);
+            color: var(--text-dim);
             opacity: 0.5;
         }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         /* Alert styling */
@@ -197,19 +237,47 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login.post') }}">
+        {{-- autocomplete="off" dan autocomplete="new-password" mencegah browser auto-fill --}}
+        <form method="POST" action="{{ route('login.post') }}" autocomplete="off">
             @csrf
+
+            {{-- Input dummy tersembunyi untuk mengelabui autofill browser --}}
+            <input type="text" name="fakeusernameremembered" style="display:none;">
+            <input type="password" name="fakepasswordremembered" style="display:none;">
+
             <div class="form-group">
                 <label for="email">Alamat Email</label>
                 <div class="input-wrapper">
-                    <input type="email" id="email" name="email" placeholder="admin@ppu.go.id" value="{{ old('email') }}" required autofocus>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder=" "
+                        value="{{ old('email') }}" 
+                        required 
+                        autofocus
+                        autocomplete="new-password"
+                        readonly
+                        onfocus="this.removeAttribute('readonly')"
+                    >
+                    <span class="custom-placeholder" id="placeholder-email"></span>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="password">Kata Sandi</label>
                 <div class="input-wrapper">
-                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder=" "
+                        required
+                        autocomplete="new-password"
+                        readonly
+                        onfocus="this.removeAttribute('readonly')"
+                    >
+                    <span class="custom-placeholder" id="placeholder-password"></span>
                 </div>
             </div>
 
@@ -227,6 +295,89 @@
     
     <p class="footer-text">© 2026 Pemkab Penajam Paser Utara</p>
 </div>
+
+<script>
+    /**
+     * Typewriter animation untuk placeholder
+     * @param {HTMLElement} el - elemen span placeholder
+     * @param {string} text - teks yang akan diketik
+     * @param {number} speed - kecepatan ketik (ms per karakter)
+     * @param {number} delay - jeda sebelum mulai (ms)
+     */
+    function typewriterPlaceholder(el, text, speed = 80, delay = 0) {
+        let i = 0;
+        el.textContent = '';
+
+        setTimeout(() => {
+            const interval = setInterval(() => {
+                if (i < text.length) {
+                    el.textContent += text[i];
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    // Setelah selesai, tunggu lalu hapus dan ulangi (loop)
+                    setTimeout(() => {
+                        eraseText(el, text, speed, delay);
+                    }, 2000);
+                }
+            }, speed);
+        }, delay);
+    }
+
+    function eraseText(el, text, speed, delay) {
+        let i = text.length;
+        const interval = setInterval(() => {
+            if (i > 0) {
+                el.textContent = text.substring(0, i - 1);
+                i--;
+            } else {
+                clearInterval(interval);
+                // Mulai ulang animasi ketik
+                setTimeout(() => {
+                    typewriterPlaceholder(el, text, speed, 300);
+                }, 500);
+            }
+        }, speed / 2); // hapus lebih cepat dari ketik
+    }
+
+    // Sembunyikan placeholder saat input diisi atau difokus
+    function bindInputVisibility(inputEl, placeholderEl) {
+        const hide = () => {
+            if (inputEl.value.length > 0 || document.activeElement === inputEl) {
+                placeholderEl.style.display = 'none';
+            } else {
+                placeholderEl.style.display = 'block';
+            }
+        };
+
+        inputEl.addEventListener('focus', () => { placeholderEl.style.display = 'none'; });
+        inputEl.addEventListener('blur', () => {
+            if (inputEl.value.length === 0) {
+                placeholderEl.style.display = 'block';
+            }
+        });
+        inputEl.addEventListener('input', hide);
+    }
+
+    // Jalankan saat halaman siap
+    window.addEventListener('DOMContentLoaded', () => {
+        const emailInput       = document.getElementById('email');
+        const passwordInput    = document.getElementById('password');
+        const placeholderEmail = document.getElementById('placeholder-email');
+        const placeholderPass  = document.getElementById('placeholder-password');
+
+        // Sembunyikan placeholder jika field sudah terisi (misal dari old() Laravel)
+        if (emailInput.value.length > 0) placeholderEmail.style.display = 'none';
+
+        // Mulai animasi typewriter
+        typewriterPlaceholder(placeholderEmail, 'admin@ppu.go.id', 90, 500);
+        typewriterPlaceholder(placeholderPass,  '••••••••',         120, 1200);
+
+        // Bind visibilitas
+        bindInputVisibility(emailInput, placeholderEmail);
+        bindInputVisibility(passwordInput, placeholderPass);
+    });
+</script>
 
 </body>
 </html>
