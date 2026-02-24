@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller; // ← INI YANG KURANG
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
